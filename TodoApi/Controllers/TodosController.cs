@@ -38,6 +38,7 @@ public class TodosController : ControllerBase
         throw new NotImplementedException();
 
     }
+    [HttpPut("{id}/Complete")]
     public IActionResult Complete(int id)
     {
         throw new NotImplementedException();
