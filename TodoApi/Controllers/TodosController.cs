@@ -1,4 +1,6 @@
 ﻿using Microsoft.AspNetCore.Mvc;
+using System.Security.Claims;
+using TodoLibrary.DataAccess;
 using TodoLibrary.Models;
 
 // For more information on enabling Web API for empty projects, visit https://go.microsoft.com/fwlink/?LinkID=397860
@@ -9,46 +11,63 @@ namespace TodoApi.Controllers;
 [ApiController]
 public class TodosController : ControllerBase
 {
+    private readonly ITodoData _data;
+
+    public TodosController(ITodoData data)
+    {
+        _data = data;
+    }
     // GET: api/<TodosController>
     [HttpGet]
-    public ActionResult<IEnumerable<TodoModel>> Get()
+    public async Task<ActionResult<List<TodoModel>>> Get()
     {
-        throw new NotImplementedException();
+        var userId = User.Claims.FirstOrDefault(c => c.Type == ClaimTypes.NameIdentifier)?.Value;
+        var output = await _data.GetAllAssigned(int.Parse(userId));
+        return Ok(output);
     }
 
     // GET api/<TodosController>/5
-    [HttpGet("{id}")]
-    public ActionResult<TodoModel> Get(int id)
+    [HttpGet("{todoId}")]
+    public async Task<ActionResult<TodoModel>> Get(int todoId)
     {
-        throw new NotImplementedException();
+        var userId = User.Claims.FirstOrDefault(c => c.Type == ClaimTypes.NameIdentifier)?.Value;
+        var output = await _data.GetOneAssigned(int.Parse(userId), todoId);
+        return Ok(output);
     }
 
     // POST api/<TodosController>
     [HttpPost]
-    public IActionResult Post([FromBody] string value)
+    public async Task<ActionResult<TodoModel>> Post([FromBody] string task)
     {
-        throw new NotImplementedException();
+        var userId = User.Claims.FirstOrDefault(c => c.Type == ClaimTypes.NameIdentifier)?.Value;
+        var output = await _data.Create(int.Parse(userId),task);
+        return Ok(output);
 
     }
 
     // PUT api/<TodosController>/5
-    [HttpPut("{id}")]
-    public IActionResult Put(int id, [FromBody] string value)
+    [HttpPut("{todoId}")]
+    public async Task<ActionResult> Put(int todoId, [FromBody] string task)
     {
-        throw new NotImplementedException();
-
+        var userId = User.Claims.FirstOrDefault(c => c.Type == ClaimTypes.NameIdentifier)?.Value;
+        await _data.UpdateTask(int.Parse(userId), todoId, task);
+        return Ok();
     }
-    [HttpPut("{id}/Complete")]
-    public IActionResult Complete(int id)
+    [HttpPut("{todoId}/Complete")]
+    public async Task<IActionResult> Complete(int todoId)
     {
-        throw new NotImplementedException();
+        var userId = User.Claims.FirstOrDefault(c => c.Type == ClaimTypes.NameIdentifier)?.Value;
+        await _data.CompleteTodo(int.Parse(userId), todoId); 
+        return Ok();
     }
 
     // DELETE api/<TodosController>/5
-    [HttpDelete("{id}")]
-    public IActionResult Delete(int id)
+    [HttpDelete("{todoId}")]
+    public async Task<IActionResult> Delete(int todoId)
     {
-        throw new NotImplementedException();
+        var userId = User.Claims.FirstOrDefault(c => c.Type == ClaimTypes.NameIdentifier)?.Value;
+        await _data.DeleteTodo(int.Parse(userId),todoId);
+        return Ok();
 
     }
 }
