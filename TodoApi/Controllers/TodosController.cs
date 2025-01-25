@@ -1,4 +1,5 @@
-﻿using Microsoft.AspNetCore.Mvc;
+﻿using Microsoft.AspNetCore.Http.HttpResults;
+using Microsoft.AspNetCore.Mvc;
 using System.Security.Claims;
 using TodoLibrary.DataAccess;
 using TodoLibrary.Models;
@@ -12,18 +13,30 @@ namespace TodoApi.Controllers;
 public class TodosController : ControllerBase
 {
     private readonly ITodoData _data;
+    private readonly ILogger<TodosController> _logger;
 
-    public TodosController(ITodoData data)
+    public TodosController(ITodoData data, ILogger<TodosController> logger)
     {
         _data = data;
+        _logger = logger;
     }
     // GET: api/<TodosController>
     [HttpGet]
     public async Task<ActionResult<List<TodoModel>>> Get()
     {
-        var userId = User.Claims.FirstOrDefault(c => c.Type == ClaimTypes.NameIdentifier)?.Value;
-        var output = await _data.GetAllAssigned(int.Parse(userId));
-        return Ok(output);
+        _logger.LogInformation("Calling all todos");
+        try
+        {
+            var userId = User.Claims.FirstOrDefault(c => c.Type == ClaimTypes.NameIdentifier)?.Value;
+            var output = await _data.GetAllAssigned(int.Parse(userId));
+            return Ok(output);
+        }
+        catch (Exception ex)
+        {
+
+            _logger.LogError(ex, "Get all todos failed");
+            return BadRequest();
+        }
     }
 
     // GET api/<TodosController>/5
